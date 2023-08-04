@@ -5,7 +5,7 @@ import RequestScreen from '../screen/RequestScreen'
 import DescriptionScreen from '../screen/DescriptionScreen';
 import LoginScreen from '../screen/LoginScreen';
 import QuoteScreen from '../screen/QuoteScreen';
-import ConfirmScreen from '../screen/ConfirmScreen';
+import LastScreen from '../screen/LastScreen';
 import GigScreen from '../screen/GigScreen';
 import ArrivedScreen from '../screen/ArrivedScreen';
 import ConfirmationScreen from '../screen/confirmationScreen';
@@ -51,8 +51,8 @@ export function HomeStack() {
 
 
 <Home.Screen
-                name="ConfirmScreen"
-                component={ConfirmScreen}
+                name="LastScreen"
+                component={LastScreen}
                 options={{ headerShown: false }}
             />
 

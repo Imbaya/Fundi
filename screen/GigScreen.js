@@ -102,6 +102,8 @@ const GigScreen = ({ navigation }) => {
                 style={styles.imageBackground}
             >
 
+                
+
 
                 <View style={styles.statsView}>
 
@@ -149,8 +151,15 @@ const GigScreen = ({ navigation }) => {
                     <View style={styles.textView}>
 
                     <Text allowFontScaling={false} style={fonts.blackBoldMedium}> Alice Achieng</Text>
+<View style={styles.textView}>
+                    <Icon type="material-community" 
+                                                         name = "paperclip"
+                                                         color= "#17304A"
+                                                         size = {20}
+                                                         
+                                                          />
                     <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
-
+                    </View>
                     </View>
 
                    
@@ -160,10 +169,7 @@ const GigScreen = ({ navigation }) => {
 
 
 
-                        <View style={styles.textView2}>
-                       
-                            <Text allowFontScaling={false} style={fonts.blackBoldSmall}>+254722xxxxxx</Text>
-                        </View>
+                        
 
                         <View style={styles.textView2}>
 
@@ -251,7 +257,7 @@ const GigScreen = ({ navigation }) => {
         <View style={styles.textView}>
             <TouchableOpacity>
             <View style={styles.textView2}>
-                <MaterialIcons name="location-pin" size={24} color="black" />
+                <MaterialIcons name="location-pin" size={24} color="#1E7200" />
                 <Text style={fonts.greyLightBig}> Waumini Apartments</Text>
             </View>
 
@@ -392,7 +398,15 @@ const GigScreen = ({ navigation }) => {
                     <View style={styles.textView}>
 
                     <Text allowFontScaling={false} style={fonts.blackBoldMedium}> Alice Achieng</Text>
+                    <View style={styles.textView}>
+                    <Icon type="material-community" 
+                                                         name = "paperclip"
+                                                         color= "#17304A"
+                                                         size = {20}
+                                                         
+                                                          />
                     <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
+                    </View>
 
                     </View>
 
@@ -494,7 +508,7 @@ const GigScreen = ({ navigation }) => {
         <View style={styles.textView}>
             <TouchableOpacity>
             <View style={styles.textView2}>
-                <MaterialIcons name="location-pin" size={24} color="black" />
+                <MaterialIcons name="location-pin" size={24} color="#1E7200" />
                 <Text style={fonts.greyLightBig}> Waumini Apartments</Text>
             </View>
 
@@ -605,7 +619,7 @@ const GigScreen = ({ navigation }) => {
 
 
 
-                <TitleText style={fonts.whiteBoldBig}>Delivery (5)</TitleText>
+                <TitleText style={fonts.whiteBoldBig}>Active (5)</TitleText>
                
                 <View style={styles.gigs}>
 
@@ -633,7 +647,15 @@ const GigScreen = ({ navigation }) => {
                     <View style={styles.textView}>
 
                     <Text allowFontScaling={false} style={fonts.blackBoldMedium}> Alice Achieng</Text>
+                    <View style={styles.textView}>
+                    <Icon type="material-community" 
+                                                         name = "paperclip"
+                                                         color= "#17304A"
+                                                         size = {20}
+                                                         
+                                                          />
                     <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
+                    </View>
 
                     </View>
 
@@ -735,7 +757,7 @@ const GigScreen = ({ navigation }) => {
         <View style={styles.textView}>
             <TouchableOpacity>
             <View style={styles.textView2}>
-                <MaterialIcons name="location-pin" size={24} color="black" />
+                <MaterialIcons name="location-pin" size={24} color="#1E7200"/>
                 <Text style={fonts.greyLightBig}> Waumini Apartments (View Map)</Text>
             </View>
 
