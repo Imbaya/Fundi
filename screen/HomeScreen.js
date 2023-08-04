@@ -1,5 +1,5 @@
 import React, {useState,useRef,useEffect} from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ImageBackground } from 'react-native';
 import Card from '../components/card';
 import { Dimensions } from 'react-native';
 import TitleText from '../components/TitleText';
@@ -56,7 +56,11 @@ const HomeScreen =({ navigation }) => {
 
         <View style={styles.container}>
 
-
+<ImageBackground
+                source={require('../assets/map.png')}
+                resizeMode="cover"
+                style={styles.imageBackground}
+            >
 <View style={styles.iconView}>
                 <Icon
                     type="material-community"
@@ -88,17 +92,7 @@ const HomeScreen =({ navigation }) => {
             </View>
 
 
-            <MapView
-                ref={_map}
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                showsUserLocation={true}
-                followsUserLocation={true}
-                
-            > 
-        
-            </MapView>
-
+            </ImageBackground>
 
         </View>
 
@@ -172,6 +166,13 @@ const styles = StyleSheet.create({
       },
 
 
+      imageBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height
+    },
+    
 
 });
 
