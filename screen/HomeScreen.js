@@ -3,58 +3,70 @@ import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import Card from '../components/card';
 import { Dimensions } from 'react-native';
 import TitleText from '../components/TitleText';
-import MapView, { PROVIDER_GOOGLE, } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { Icon } from 'react-native-elements';
-import { auth, db } from '../Database/config';
-import { setDoc, doc } from "firebase/firestore";
+import MapView, { Marker } from 'react-native-maps';
+import { PermissionsAndroid } from 'react-native';
+import * as Location from 'expo-location';
+
 
 const HomeScreen =({ navigation }) => {
+  
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-    const [latitude, setLatitude] = useState("");
-    const [longitude, setLongitude] = useState("");
+ 
+useEffect(() => {
+  (async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Permission',
+          message: 'App needs access to your location.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
 
-    const checkPermission = async () => {
-      const hasPermission = await Location.requestForegroundPermissionsAsync();
-      if (hasPermission.status === 'granted') {
-        const permission = await askPermission();
-        return permission
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation(location.coords);
+      } else {
+        setErrorMsg('Permission to access location was denied');
       }
-      return true
-    };
-  
-    const askPermission = async () => {
-      const permission = await Location.requestBackgroundPermissionsAsync();
-      return permission.status === 'granted';
-    };
-  
-  
-    const getLocation = async () => {
-      try {
-        const { granted } = await Location.requestBackgroundPermissionsAsync();
-        if (!granted) return;
-        const {
-          coords: { latitude, longitude },
-        } = await Location.getCurrentPositionAsync();
-        setLatitude(latitude);
-        setLongitude(longitude);
-      } catch (err) {
-  
-      }
+    } catch (error) {
+      console.error('Error requesting location permission:', error);
     }
-  
-    const _map = useRef(1);
-  
-    useEffect(() => {
-      checkPermission();
-      getLocation()
-        , []
-    })
-   
+  })();
+}, []);
+
     return (
 
 
         <View style={styles.container}>
+
+{location ? (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}>
+          <Marker
+            coordinate={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }}
+            title="Your Location"
+            description="You are here!"
+          />
+        </MapView>
+      ) : (
+        <Text>Loading...</Text>
+      )}
 
 
 <View style={styles.iconView}>
@@ -88,16 +100,7 @@ const HomeScreen =({ navigation }) => {
             </View>
 
 
-            <MapView
-                ref={_map}
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                showsUserLocation={true}
-                followsUserLocation={true}
-                
-            > 
-        
-            </MapView>
+            
 
 
         </View>

@@ -4,12 +4,12 @@
     "slug": "rekebishaApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/splashlogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#17304A"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -25,7 +25,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.whim.RekebishaFundi001"
+      "package": "com.whim.RekebishaFundi001",
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/favicon.png"

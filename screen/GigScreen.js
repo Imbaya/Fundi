@@ -1,88 +1,1033 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, FlatList, TextInput, ImageBackground,Image } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, FlatList, TextInput, ImageBackground,Image, Modal } from 'react-native';
 import Card from '../components/card';
-import { Dimensions } from 'react-native';
+import { Dimensions, Linking } from 'react-native';
 import TitleText from '../components/TitleText';
 import * as Location from 'expo-location';
-import SubText from '../components/SubText';
-import { Icon } from 'react-native-elements';
-import { db } from '../Database/config';
+import { db,auth } from '../Database/config';
 import { dbc } from '../Database/clientSide';
 import { fonts } from '../components/fonts';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { ScrollView } from 'react-native-gesture-handler';
+import getDistance from 'geolib/es/getPreciseDistance';
+import MapView, { Marker } from 'react-native-maps';
 
 const GigScreen = ({ navigation }) => {
-    const [email, setEmail] = useState('');
-    const [description, setDescritpion] = useState('');
+    const [username, setUsername] = useState('');
+    const [description, setDescription] = useState('');
     const [allgigs, setAllgigs] = useState([]);
     const [location, setLocation] = useState({});
     const [address, setAddress] = useState('');
     const [category, setCategory] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
+    const [amount, setAmount] = useState(0);
+    const [buyerLatitude, setBuyerLatitude] = useState(0);
+    const [buyerLongitude, setBuyerLongitude] = useState(0);
+    const [distance, setDistance] = useState(0);
+    const [latitude, setLatitude] = useState(0);
+    const [longitude, setLongitude] = useState(0);
+    const [timeinminutes, setTimeInMinutes] = useState(0);
+    const [couriercharges, setCourierCharges] = useState(0);
+    const [totalmoney, setTotalMoney] = useState(0);
+    const [pendingGigs, setPendingGigs] = useState([]);
+    const [activeGigs, setActiveGigs] = useState([]);
+    const [AgentFirstName, setAgentFirstName] = useState("");
+    const [AgentLastName, setAgentLastName] = useState("");
+    const [AgentPhoneNumber, setAgentPhoneNumber] = useState("");
+    const [modalVisible, setModalVisible] = useState(false);
+
+
+    const openDialer = (phoneNumber) => {
+        const formattedPhoneNumber = phoneNumber.replace(/\s+/g, ''); // Remove spaces from the phone number
+        const dialableNumber = `tel:${formattedPhoneNumber}`;
+        
+        Linking.openURL(dialableNumber)
+          .catch((err) => console.error('An error occurred when trying to open the dialer', err));
+      };
+      
 
         //Import all the gigs from firebase
-        const getGigs =async () => {
+        const getNewOrders =async () => {
             setRefreshing(true);
         
             const allgigs = [];
-            const querySnapshot = await dbc.collection("Description").get();
+            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "New Gig").get();
             querySnapshot.forEach((doc) => {
                 allgigs.push({ id: doc.id, ...doc.data() });
                 // doc.data() is never undefined for query doc snapshots
                 console.log(doc.id, " => ", doc.data());
+                const lat= doc.data().location.latitude;
+                const long = doc.data().location.longitude;
+                const amount = doc.data().amount;
+                setBuyerLatitude(lat);
+                setBuyerLongitude(long); 
+                setAmount(amount);
+                
             });
             setAllgigs([...allgigs]);
             setRefreshing(false);
             
         } 
 
-  /*  const renderGridItem = itemData => {
-        return (
-            ////COMPONENT IMPORTED TO RENDER FLATLIST ITEMS//////
-            <Gigs
-                name={itemData.item.name}
+          //Import all the gigs from firebase
+          const getPendingOrders =async () => {
+            setRefreshing(true);
+            const pendinggigs = [];
+            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "Pending Delivery").where("agentId", "==", auth.currentUser.uid).get();
+            querySnapshot.forEach((doc) => {
+                pendinggigs.push({ id: doc.id, ...doc.data() });
+                // doc.data() is never undefined for query doc snapshots
+                console.log(doc.id, " => ", doc.data());
+                const lat= doc.data().Latitude;
+                const long = doc.data().Longitude;
+                const amount = doc.data().Budget;
+                setBuyerLatitude(lat);
+                setBuyerLongitude(long); 
+                setAmount(amount);
+            });
+            setPendingGigs([...pendinggigs]);
+            setRefreshing(false);
+            
+        } 
+        
+          //Import all the gigs from firebase
+          const getActiveOrders =async () => {
+            setRefreshing(true);
+            const activegigs = [];
+            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "Active").where("agentId", "==", auth.currentUser.uid).get();
+            querySnapshot.forEach((doc) => {
+                activegigs.push({ id: doc.id, ...doc.data() });
+                // doc.data() is never undefined for query doc snapshots
+                console.log(doc.id, " => ", doc.data());
+                const lat= doc.data().Latitude;
+                const long = doc.data().Longitude;
+                const amount = doc.data().Budget;
+                setBuyerLatitude(lat);
+                setBuyerLongitude(long); 
+                setAmount(amount);
+            });
+            setActiveGigs([...activegigs]);
+            setRefreshing(false);
+            
+        } 
 
-                image={itemData.item.image}
-                location={itemData.item.location}
-                service={itemData.item.service}
-                remarks={itemData.item.remarks}
-                onSelect={() => { navigation.replace("QuoteScreen", { state: 0 }) }}
+        useEffect(() => {
+         getLocation();
+         getUserDetails();
+         getActiveOrders();
+         getNewOrders();
+         getPendingOrders();
 
+        }, [])
+        
 
-            />
-        )
-    }*/
+        
+        const [showMap, setShowMap] = useState(false);
+        const renderOrders = ({item}) => {
+            const distance = getDistance(
+                latitude,
+                longitude,
+                item.Latitude,
+                item.Longitude
+            );
+            //claculate the courier charge price depending on distance
+            const courierCharges = distance * 20
+        
+            const averageSpeed = 80; // km/hour
+        
+            const timeInMinutes = (distance / averageSpeed )*60;
+        
+            const totalMoney = courierCharges + item.Budget
+        
+            //Accepting an order
+         const handleUpdate = async (id) => {
+            await dbc.collection('FundiIssues').doc(id).update({
+              status: "Pending Delivery",
+              agentId: auth.currentUser.uid,
+              agentLatitude: latitude,
+              agentLongitude: longitude,
+              totalMoney,
+              timeInMinutes,
+              courierCharges,
+              distance,
+              AgentFirstName:AgentFirstName,
+              AgentLastName:AgentLastName,
+              AgentPhoneNumber:AgentPhoneNumber
+              });
+              setDistance(distance);
+              setTimeInMinutes(timeInMinutes);
+              setCourierCharges(courierCharges);
+              setTotalMoney(totalMoney);
+             // setIsAccepted(id);
+              getNewOrders();
+              getPendingOrders();
+            };
+            const clientLocation = {
+                latitude: item.location.latitude,
+                longitude: item.location.longitude,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+              };
+        
+              const handleViewLocation = () => {
+                setShowMap(!showMap);
+              };
+                return (
+                    <View style={styles.gigs}>
+
+                    <Card style={styles.prodCard}>
+                    
+                       
+                    
+                        <View style={styles.orderDetails}>
+                          
+                          
+                    
+                            <Card style={styles.additionsView}>
+                                
+                            
+                            <View style={styles.descriptionView}>   
+                                        <View style={styles.cartprodImage}>
+                                        <Image
+                                          //  source={{ uri: imgUrl }}
+                                            style={styles.bannerimage}
+                                        // resizeMode="cover" 
+                                        />
+                                    </View>
+                    <View style={styles.description}>
+                    
+                                        <View style={styles.textView}>
+                    
+                                        <Text allowFontScaling={false} style={fonts.blackBoldMedium}> {item.clientName}</Text>
+                                        
+                                        <TouchableOpacity  onPress={() => setModalVisible(true)}>
+                                        <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
+                                        </TouchableOpacity>
+                    
+                                        </View>
+                                        <Modal
+                                            animationType="slide"
+                                            transparent={true}
+                                            visible={modalVisible}
+                                            onRequestClose={() => setModalVisible(false)}
+                                            >
+                                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                                <Image
+                                                source={{ uri: item.imageUrl }} // Replace 'imgUrl' with the actual URL or path of the image
+                                                style={{ width: '100%', height: '90%' }} // Adjust the dimensions as needed
+                                                resizeMode="contain" // Adjust the resizeMode as needed
+                                                />
+                                                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                                <Text style={{  fontSize: 26, color: 'white' }}>Close</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            </Modal>
+
+                    
+                                       
+                                        
+                                        <View style={styles.textView}>
+                    
+                    
+                    
+                    
+                                            <View style={styles.textView2}>
+                                            <TouchableOpacity onPress={() => openDialer(item.clientNumber)}>
+                                                <Text allowFontScaling={false} style={fonts.blackBoldSmall}>
+                                                {item.clientNumber}
+                                                </Text>
+                                            </TouchableOpacity>
+                                            </View>
+                    
+                                            <View style={styles.textView2}>
+                    
+                                                {/* <Text  style={styles.text42}>Quantity</Text>*/}
+                                            </View>
+                    
+                                            
+                                            
+                    
+                                        </View>
+                                       
+                    
+                    
+                                      
+                                        <View style={styles.textView}>
+                    
+                    
+                                            <View style={styles.textView2}>
+                                               
+                                                <Text allowFontScaling={false} style={fonts.greyLightSmall}>Labour Charge</Text>
+                    
+                                            </View>
+                    
+                                            
+                    
+                                           
+                    
+                                            <View style={styles.textView2}>
+                                               
+                                            <Text allowFontScaling={false} style={fonts.greyLightSmall}>{item.amount} </Text>
+                    
+                                           </View>
+                    
+                                            
+                                        </View>
+                    
+                                        <View style={styles.textView}>
+                    
+                    
+                    <View style={styles.textView2}>
+                       
+                        <Text allowFontScaling={false} style={fonts.greyLightSmall}>Transport Charge</Text>
+                    
+                    </View>
+                    
+                    
+                    
+                    
+                    
+                    <View style={styles.textView2}>
+                       
+                    <Text allowFontScaling={false} style={fonts.greyLightSmall}>{courierCharges} </Text>
+                    
+                    </View>
+                    
+                    
+                    </View>
+                    
+                    
+                    
+                                        </View>
+                                        </View>
+                    
+                    
+                    
+                    
+                    
+                                        
+                                
+                    
+                            </Card>
+                    
+                            <View style={styles.textView}>
+                                <View style={styles.textView2}>
+                                   
+                                </View>
+                    
+                                <View style={styles.textView2}>
+                                   
+                                    <Text  style={fonts.greeBoldSmall}>Ksh {item.amount}</Text>
+                                </View>
+                            </View>
+                    
+                    
+                            <View style={styles.textView}>
+                                <TouchableOpacity onPress={handleViewLocation}>
+                                <View style={styles.textView2}>
+                                    <MaterialIcons name="location-pin" size={24} color="black" />
+                                    <Text style={fonts.greyLightBig}> View location </Text>
+                                </View>
+                    
+                                </TouchableOpacity>
+                               
+                               
+                            </View>
+                    
+                            {showMap && (
+                                    <MapView
+                                    style={{ width: '100%', height: 200 }}
+                                    region={clientLocation}
+                                    >
+                                    <Marker coordinate={clientLocation} title="Client Location" />
+                                    </MapView>
+                                )}
+                            
+                    
+                           
+                    
+                    
+                            <View style={styles.textView}>
+                    
+                    
+                                <View style={styles.customerDet}>
+                                    
+                    
+                                    <View style={styles.nameDetail}>
+                                        <Text  style={fonts.blackBoldMedium}>Request</Text>
+                    
+                                        <TouchableOpacity>
+                                        
+                                            <Text style={fonts.blackBoldMedium}>{item.selected}</Text>
+                                       
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                    
+                    
+                                
+                            </View>
+                    
+                            <View style={styles.textView}>
+                    
+                    
+                    
+                    
+                    
+                    
+                    </View>
+                    
+                    
+                    <View style={styles.customerDet}>
+                        
+                    
+                        <View style={styles.nameDetail}>
+                            <Text  style={fonts.blackBoldMedium}>Remarks</Text>
+                    
+                           
+                            
+                                
+                           
+                            
+                        </View>
+                    
+                       
+                    </View>
+                    <Text style={fonts.blackLightSmall}>{item.description}</Text>
+                          
+                    
+                    
+                    
+                            <View style={styles.buttonView}>
+                    
+                                <Card style={styles.declineButton}>
+                                <TouchableOpacity >
+                                    <Text style={fonts.blackBoldMedium}>
+                                    Decline
+                                    </Text>
+                                    </TouchableOpacity>
+                                </Card>
+                             
+                                
+                                <Card style={styles.acceptButton}>
+                                <TouchableOpacity onPress={() => handleUpdate(item.id)} >
+                                    <Text style={fonts.blackBoldMedium}>
+                                    Accept
+                                    </Text>
+                                    </TouchableOpacity>
+                                </Card>
+                                
+                                
+                    
+                            </View>
+                    
+                    
+                    
+                    
+                        </View>
+                    
+                    
+                    
+                    
+                    
+                    </Card>
+                    
+                    
+                    
+                    
+                    
+                    
+                    </View>
+    
+            )};
+
+            const renderPendingOrders = ({item}) => {
+                const clientLocation = {
+                    latitude: item.location.latitude,
+                    longitude: item.location.longitude,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                  };
+            
+                  const handleViewLocation = () => {
+                    setShowMap(!showMap);
+                  };
+               
+                    return (
+                        <View style={styles.gigs}>
+    
+                        <Card style={styles.prodCard}>
+                        
+                           
+                        
+                            <View style={styles.orderDetails}>
+                              
+                              
+                        
+                                <Card style={styles.additionsView}>
+                                    
+                                
+                                <View style={styles.descriptionView}>   
+                                            <View style={styles.cartprodImage}>
+                                            <Image
+                                              //  source={{ uri: imgUrl }}
+                                                style={styles.bannerimage}
+                                            // resizeMode="cover" 
+                                            />
+                                        </View>
+                        <View style={styles.description}>
+                        
+                                            <View style={styles.textView}>
+                        
+                                            <Text allowFontScaling={false} style={fonts.blackBoldMedium}> {item.clientName}</Text>
+                                            
+                                            <TouchableOpacity  onPress={() => setModalVisible(true)}>
+                                            <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
+                                            </TouchableOpacity>
+                        
+                                            </View>
+                                            <Modal
+                                            animationType="slide"
+                                            transparent={true}
+                                            visible={modalVisible}
+                                            onRequestClose={() => setModalVisible(false)}
+                                            >
+                                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                                <Image
+                                                source={{ uri: item.imageUrl }} // Replace 'imgUrl' with the actual URL or path of the image
+                                                style={{ width: '100%', height: '90%' }} // Adjust the dimensions as needed
+                                                resizeMode="contain" // Adjust the resizeMode as needed
+                                                />
+                                                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                                <Text style={{  fontSize: 26, color: 'white' }}>Close</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            </Modal>
+                        
+                                           
+                                            
+                                            <View style={styles.textView}>
+                        
+                        
+                        
+                        
+                                                <View style={styles.textView2}>
+                                               
+                                                <TouchableOpacity onPress={() => openDialer(item.clientNumber)}>
+                                                <Text allowFontScaling={false} style={fonts.blackBoldSmall}>
+                                                {item.clientNumber}
+                                                </Text>
+                                                 </TouchableOpacity>
+
+                                                </View>
+                        
+                                                <View style={styles.textView2}>
+                        
+                                                    {/* <Text  style={styles.text42}>Quantity</Text>*/}
+                                                </View>
+                        
+                                                
+                                                
+                        
+                                            </View>
+                                           
+                        
+                        
+                                          
+                                            <View style={styles.textView}>
+                        
+                        
+                                                <View style={styles.textView2}>
+                                                   
+                                                    <Text allowFontScaling={false} style={fonts.greyLightSmall}>Labour Charge</Text>
+                        
+                                                </View>
+                        
+                                                
+                        
+                                               
+                        
+                                                <View style={styles.textView2}>
+                                                   
+                                                <Text allowFontScaling={false} style={fonts.greyLightSmall}>{item.amount} </Text>
+                        
+                                               </View>
+                        
+                                                
+                                            </View>
+                        
+                                            <View style={styles.textView}>
+                        
+                        
+                        <View style={styles.textView2}>
+                           
+                            <Text allowFontScaling={false} style={fonts.greyLightSmall}>Transport Charge</Text>
+                        
+                        </View>
+                        
+                        
+                        
+                        
+                        
+                        <View style={styles.textView2}>
+                           
+                        <Text allowFontScaling={false} style={fonts.greyLightSmall}>n/a </Text>
+                        
+                        </View>
+                        
+                        
+                        </View>
+                        
+                        
+                        
+                                            </View>
+                                            </View>
+                        
+                        
+                        
+                        
+                        
+                                            
+                                    
+                        
+                                </Card>
+                        
+                                <View style={styles.textView}>
+                                    <View style={styles.textView2}>
+                                       
+                                    </View>
+                        
+                                    <View style={styles.textView2}>
+                                       
+                                        <Text  style={fonts.greeBoldSmall}>Ksh {item.amount}</Text>
+                                    </View>
+                                </View>
+                        
+                        
+                                <View style={styles.textView}>
+                                    <TouchableOpacity  onPress={handleViewLocation}>
+                                    <View style={styles.textView2}>
+                                        <MaterialIcons name="location-pin" size={24} color="black" />
+                                        <Text style={fonts.greyLightBig}> View Location</Text>
+                                    </View>
+                        
+                                    </TouchableOpacity>
+                                   
+                                </View>
+                                {showMap && (
+                                    <MapView
+                                    style={{ width: '100%', height: 200 }}
+                                    region={clientLocation}
+                                    >
+                                    <Marker coordinate={clientLocation} title="Client Location" />
+                                    </MapView>
+                                )}
+                        
+                                
+                                
+                        
+                               
+                        
+                        
+                                <View style={styles.textView}>
+                        
+                        
+                                    <View style={styles.customerDet}>
+                                        
+                        
+                                        <View style={styles.nameDetail}>
+                                            <Text  style={fonts.blackBoldMedium}>Request</Text>
+                        
+                                            <TouchableOpacity>
+                                            
+                                                <Text style={fonts.blackBoldMedium}>{item.selected}</Text>
+                                           
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                        
+                        
+                                    
+                                </View>
+                        
+                                <View style={styles.textView}>
+                        
+                        
+                        
+                        
+                        
+                        
+                        </View>
+                        
+                        
+                        <View style={styles.customerDet}>
+                            
+                        
+                            <View style={styles.nameDetail}>
+                                <Text  style={fonts.blackBoldMedium}>Remarks</Text>
+                        
+                               
+                                
+                                    
+                               
+                                
+                            </View>
+                        
+                           
+                        </View>
+                        <Text style={fonts.blackLightSmall}>{item.description}</Text>
+                              
+                        
+                        
+                        
+                                <View style={styles.buttonView}>
+                        
+                                <Card style={styles.pendingButton}>
+                                <Text allowFontScaling={false} style={styles.text2b}>
+                                    Wait for confirmation ...
+                                </Text>
+                            </Card>
+                                    
+                                    
+                        
+                                </View>
+                        
+                        
+                        
+                        
+                            </View>
+                        
+                        
+                        
+                        
+                        
+                        </Card>
+                        
+                        
+                        
+                        
+                        
+                        
+                        </View>
+        
+                )};
+
+                const renderActiveOrders = ({item}) => {
+                    //Accepting an order
+                    const handleArrivedButtonClick = async () => {
+                        try {
+                          // Reference to the Firestore collection and the specific document
+                          const ordersCollection = dbc.collection('FundiIssues');
+                          const orderDocument = ordersCollection.doc(item.id); // Assuming item.id is the document ID
+                    
+                          // Update the "status" field to "arrived"
+                          await orderDocument.update({ status: 'Arrived' });
+                    
+                          console.log('Order status updated to arrived');
+                        } catch (error) {
+                          console.error('Error updating order status:', error);
+                        }
+                      };
+
+                      const clientLocation = {
+                        latitude: item.location.latitude,
+                        longitude: item.location.longitude,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                      };
+                
+                      const handleViewLocation = () => {
+                        setShowMap(!showMap);
+                      };
+               
+                    return (
+                        <View style={styles.gigs}>
+    
+                        <Card style={styles.prodCard}>
+                        
+                           
+                        
+                            <View style={styles.orderDetails}>
+                              
+                              
+                        
+                                <Card style={styles.additionsView}>
+                                    
+                                
+                                <View style={styles.descriptionView}>   
+                                            <View style={styles.cartprodImage}>
+                                            <Image
+                                              //  source={{ uri: imgUrl }}
+                                                style={styles.bannerimage}
+                                            // resizeMode="cover" 
+                                            />
+                                        </View>
+                        <View style={styles.description}>
+                        
+                                            <View style={styles.textView}>
+                        
+                                            <Text allowFontScaling={false} style={fonts.blackBoldMedium}> {item.clientName}</Text>
+                                            
+                                            <TouchableOpacity  onPress={() => setModalVisible(true)}>
+                                            <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
+                                            </TouchableOpacity>
+                        
+                                            </View>
+                                            <Modal
+                                            animationType="slide"
+                                            transparent={true}
+                                            visible={modalVisible}
+                                            onRequestClose={() => setModalVisible(false)}
+                                            >
+                                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                                <Image
+                                                source={{ uri: item.imageUrl }} // Replace 'imgUrl' with the actual URL or path of the image
+                                                style={{ width: '100%', height: '90%' }} // Adjust the dimensions as needed
+                                                resizeMode="contain" // Adjust the resizeMode as needed
+                                                />
+                                                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                                <Text style={{  fontSize: 26, color: 'white' }}>Close</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            </Modal>
+                        
+                                           
+                                            
+                                            <View style={styles.textView}>
+                        
+                        
+                        
+                        
+                                                <View style={styles.textView2}>
+                                               
+                                                  <TouchableOpacity onPress={() => openDialer(item.clientNumber)}>
+                                                    <Text allowFontScaling={false} style={fonts.blackBoldSmall}>
+                                                    {item.clientNumber}
+                                                    </Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                        
+                                                <View style={styles.textView2}>
+                        
+                                                    {/* <Text  style={styles.text42}>Quantity</Text>*/}
+                                                </View>
+                        
+                                                
+                                                
+                        
+                                            </View>
+                                           
+                        
+                        
+                                          
+                                            <View style={styles.textView}>
+                        
+                        
+                                                <View style={styles.textView2}>
+                                                   
+                                                    <Text allowFontScaling={false} style={fonts.greyLightSmall}>Labour Charge</Text>
+                        
+                                                </View>
+                        
+                                                
+                        
+                                               
+                        
+                                                <View style={styles.textView2}>
+                                                   
+                                                <Text allowFontScaling={false} style={fonts.greyLightSmall}>{item.amount} </Text>
+                        
+                                               </View>
+                        
+                                                
+                                            </View>
+                        
+                                            <View style={styles.textView}>
+                        
+                        
+                        <View style={styles.textView2}>
+                           
+                            <Text allowFontScaling={false} style={fonts.greyLightSmall}>Transport Charge</Text>
+                        
+                        </View>
+                        
+                        
+                        
+                        
+                        
+                        <View style={styles.textView2}>
+                           
+                        <Text allowFontScaling={false} style={fonts.greyLightSmall}>n/a </Text>
+                        
+                        </View>
+                        
+                        
+                        </View>
+                        
+                        
+                        
+                                            </View>
+                                            </View>
+                        
+                        
+                        
+                        
+                        
+                                            
+                                    
+                        
+                                </Card>
+                        
+                                <View style={styles.textView}>
+                                    <View style={styles.textView2}>
+                                       
+                                    </View>
+                        
+                                    <View style={styles.textView2}>
+                                       
+                                        <Text  style={fonts.greeBoldSmall}>Ksh {item.amount}</Text>
+                                    </View>
+                                </View>
+                        
+                        
+                                <View style={styles.textView}>
+                                    <TouchableOpacity  onPress={handleViewLocation}>
+                                    <View style={styles.textView2}>
+                                        <MaterialIcons name="location-pin" size={24} color="black" />
+                                        <Text style={fonts.greyLightBig}> View Location</Text>
+                                    </View>
+                        
+                                    </TouchableOpacity>
+                                   
+                                </View>
+                                {showMap && (
+                                    <MapView
+                                    style={{ width: '100%', height: 200 }}
+                                    region={clientLocation}
+                                    >
+                                    <Marker coordinate={clientLocation} title="Client Location" />
+                                    </MapView>
+                                )}
+                        
+                                
+                                
+                        
+                               
+                        
+                        
+                                <View style={styles.textView}>
+                        
+                        
+                                    <View style={styles.customerDet}>
+                                        
+                        
+                                        <View style={styles.nameDetail}>
+                                            <Text  style={fonts.blackBoldMedium}>Request</Text>
+                        
+                                            <TouchableOpacity>
+                                            
+                                                <Text style={fonts.blackBoldMedium}>{item.selected}</Text>
+                                           
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                        
+                        
+                                    
+                                </View>
+                        
+                                <View style={styles.textView}>
+                        
+                        
+                        
+                        
+                        
+                        
+                        </View>
+                        
+                        
+                        <View style={styles.customerDet}>
+                            
+                        
+                            <View style={styles.nameDetail}>
+                                <Text  style={fonts.blackBoldMedium}>Remarks</Text>
+                        
+                               
+                                
+                                    
+                               
+                                
+                            </View>
+                        
+                           
+                        </View>
+                        <Text style={fonts.blackLightSmall}>{item.id}</Text>
+                              
+                        
+                        
+                        
+                                <View style={styles.buttonView}>
+                        
+                                <Card style={styles.acceptButton}>
+           
+                                    <TouchableOpacity onPress={handleArrivedButtonClick} >
+                                        <Text allowFontScaling={false} style={styles.text2c}>
+                                            Arrived
+                                        </Text>
+                                    </TouchableOpacity>
+                                </Card> 
+                                                        
+                                    
+                        
+                                </View>
+                        
+                        
+                        
+                        
+                            </View>
+                        
+                        
+                        
+                        
+                        
+                        </Card>
+                        
+                        
+                        
+                        
+                        
+                        
+                        </View>
+        
+                )};
+
 
     //Get the location of the user
-    useEffect(() => {
-        const getPermissions = async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                console.log("Please grant location permissions")
-                return;
-            }
-
-            let curretLocation = await  Location.getCurrentPositionAsync({});
-            setLocation(curretLocation);
-            console.log("Location:");
-            console.log(curretLocation);
-        };
-        getPermissions();
-        geocode();
-        getGigs();
-
-    }, [])
-
-    //Get the Town using Latitude and Longitude
-    const geocode = async () => {
-        const geocodedAddress = await Location.reverseGeocodeAsync({
-            longitude: location.coords.longitude,
-            latitude: location.coords.latitude
-        });
-        setAddress(geocodedAddress[0].city);
-        console.log('reverseGeocode:');
-        console.log(geocodedAddress[0].city);
+    const getLocation = async () => {
+        try {
+          const { granted } = await Location.requestBackgroundPermissionsAsync();
+          if (!granted) return;
+          const {
+            coords: { latitude, longitude },
+          } = await Location.getCurrentPositionAsync();
+          setLatitude(latitude);
+          setLongitude(longitude);
+          console.log(latitude, longitude)
+        } catch (err) {
+    
+        }
+      }
+  
+      const getUserDetails = async () => {
+        const doc = await db.collection('FundiAppUsers').doc(auth.currentUser.uid).get();
+        console.log(doc.data());
+        const firstname = doc.data().firstname;
+        const lastname = doc.data().lastname;
+        const phonenumber = doc.data().phonenumber;
+        
+        //store the agent data in a variable
+        setAgentFirstName(firstname);
+        setAgentLastName(lastname);
+        setAgentPhoneNumber(phonenumber);
 
     }
     
@@ -118,725 +1063,47 @@ const GigScreen = ({ navigation }) => {
 
                 </View>
 
-                <ScrollView>
-
-                <TitleText style={fonts.whiteBoldBig}>New Gigs (3)</TitleText>
-
-
-                <View style={styles.gigs}>
-
-<Card style={styles.prodCard}>
-
-   
-
-    <View style={styles.orderDetails}>
-      
-      
-
-        <Card style={styles.additionsView}>
-            
-        
-        <View style={styles.descriptionView}>   
-                    <View style={styles.cartprodImage}>
-                    <Image
-                      //  source={{ uri: imgUrl }}
-                        style={styles.bannerimage}
-                    // resizeMode="cover" 
-                    />
-                </View>
-<View style={styles.description}>
-
-                    <View style={styles.textView}>
-
-                    <Text allowFontScaling={false} style={fonts.blackBoldMedium}> Alice Achieng</Text>
-                    <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
-
-                    </View>
-
-                   
-                    
-                    <View style={styles.textView}>
-
-
-
-
-                        <View style={styles.textView2}>
-                       
-                            <Text allowFontScaling={false} style={fonts.blackBoldSmall}>+254722xxxxxx</Text>
-                        </View>
-
-                        <View style={styles.textView2}>
-
-                            {/* <Text  style={styles.text42}>Quantity</Text>*/}
-                        </View>
-
-                        
-                        
-
-                    </View>
-                   
-
-
-                  
-                    <View style={styles.textView}>
-
-
-                        <View style={styles.textView2}>
-                           
-                            <Text allowFontScaling={false} style={fonts.greyLightSmall}>Labour Charge</Text>
-
-                        </View>
-
-                        
-
-                       
-
-                        <View style={styles.textView2}>
-                           
-                        <Text allowFontScaling={false} style={fonts.greyLightSmall}>500 </Text>
-
-                       </View>
-
-                        
-                    </View>
-
-                    <View style={styles.textView}>
-
-
-<View style={styles.textView2}>
-   
-    <Text allowFontScaling={false} style={fonts.greyLightSmall}>Transport Charge</Text>
-
-</View>
-
-
-
-
-
-<View style={styles.textView2}>
-   
-<Text allowFontScaling={false} style={fonts.greyLightSmall}>300 </Text>
-
-</View>
-
-
-</View>
-
-
-
-                    </View>
-                    </View>
-
-
-
-
-
-                    
-            
-
-        </Card>
-
-        <View style={styles.textView}>
-            <View style={styles.textView2}>
-               
-            </View>
-
-            <View style={styles.textView2}>
-               
-                <Text  style={fonts.greeBoldSmall}>Ksh 800</Text>
-            </View>
-        </View>
-
-
-        <View style={styles.textView}>
-            <TouchableOpacity>
-            <View style={styles.textView2}>
-                <MaterialIcons name="location-pin" size={24} color="black" />
-                <Text style={fonts.greyLightBig}> Waumini Apartments</Text>
-            </View>
-
-            </TouchableOpacity>
-           
-        </View>
-
-        
-        
-
-       
-
-
-        <View style={styles.textView}>
-
-
-            <View style={styles.customerDet}>
-                
-
-                <View style={styles.nameDetail}>
-                    <Text  style={fonts.blackBoldMedium}>Request</Text>
-
-                    <TouchableOpacity>
-                    
-                        <Text style={fonts.blackBoldMedium}>Plumber</Text>
-                   
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-
-            
-        </View>
-
-        <View style={styles.textView}>
-
-
-
-
-
-
-</View>
-
-
-<View style={styles.customerDet}>
-    
-
-    <View style={styles.nameDetail}>
-        <Text  style={fonts.blackBoldMedium}>Remarks</Text>
-
-       
-        
-            
-       
-        
-    </View>
-
-   
-</View>
-<Text style={fonts.blackLightSmall}>Hello, am looking for a plumber to 
-            fix my kitchen sink, please look at the photos I sent. Its Urgent Please!</Text>
-      
-
-
-
-        <View style={styles.buttonView}>
-
-            <Card style={styles.declineButton}>
-            <TouchableOpacity >
-                <Text style={fonts.blackBoldMedium}>
-                Decline
-                </Text>
-                </TouchableOpacity>
-            </Card>
-         
-            
-            <Card style={styles.acceptButton}>
-            <TouchableOpacity >
-                <Text style={fonts.blackBoldMedium}>
-                Accept
-                </Text>
-                </TouchableOpacity>
-            </Card>
-            
-            
-
-        </View>
-
-
-
-
-    </View>
-
-
-
-
-
-</Card>
-
-
-
-
-
-
-</View>
-                
-
-
-
-                  <TitleText style={fonts.whiteBoldBig}>Pending (4)
-             
-                  </TitleText>
-
-
-                  <View style={styles.gigs}>
-
-<Card style={styles.prodCard}>
-
-   
-
-    <View style={styles.orderDetails}>
-      
-      
-
-        <Card style={styles.additionsView}>
-            
-        
-        <View style={styles.descriptionView}>   
-                    <View style={styles.cartprodImage}>
-                    <Image
-                      //  source={{ uri: imgUrl }}
-                        style={styles.bannerimage}
-                    // resizeMode="cover" 
-                    />
-                </View>
-<View style={styles.description}>
-
-                    <View style={styles.textView}>
-
-                    <Text allowFontScaling={false} style={fonts.blackBoldMedium}> Alice Achieng</Text>
-                    <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
-
-                    </View>
-
-                   
-                    
-                    <View style={styles.textView}>
-
-
-
-
-                        <View style={styles.textView2}>
-                       
-                            <Text allowFontScaling={false} style={fonts.blackBoldSmall}>+254722xxxxxx</Text>
-                        </View>
-
-                        <View style={styles.textView2}>
-
-                            {/* <Text  style={styles.text42}>Quantity</Text>*/}
-                        </View>
-
-                        
-                        
-
-                    </View>
-                   
-
-
-                  
-                    <View style={styles.textView}>
-
-
-                        <View style={styles.textView2}>
-                           
-                            <Text allowFontScaling={false} style={fonts.greyLightSmall}>Labour Charge</Text>
-
-                        </View>
-
-                        
-
-                       
-
-                        <View style={styles.textView2}>
-                           
-                        <Text allowFontScaling={false} style={fonts.greyLightSmall}>500 </Text>
-
-                       </View>
-
-                        
-                    </View>
-
-                    <View style={styles.textView}>
-
-
-<View style={styles.textView2}>
-   
-    <Text allowFontScaling={false} style={fonts.greyLightSmall}>Transport Charge</Text>
-
-</View>
-
-
-
-
-
-<View style={styles.textView2}>
-   
-<Text allowFontScaling={false} style={fonts.greyLightSmall}>300 </Text>
-
-</View>
-
-
-</View>
-
-
-
-                    </View>
-                    </View>
-
-
-
-
-
-                    
-            
-
-        </Card>
-
-        <View style={styles.textView}>
-            <View style={styles.textView2}>
-               
-            </View>
-
-            <View style={styles.textView2}>
-               
-                <Text  style={fonts.greeBoldSmall}>Ksh 800</Text>
-            </View>
-        </View>
-
-
-        <View style={styles.textView}>
-            <TouchableOpacity>
-            <View style={styles.textView2}>
-                <MaterialIcons name="location-pin" size={24} color="black" />
-                <Text style={fonts.greyLightBig}> Waumini Apartments</Text>
-            </View>
-
-            </TouchableOpacity>
-           
-        </View>
-
-        
-        
-
-       
-
-
-        <View style={styles.textView}>
-
-
-            <View style={styles.customerDet}>
-                
-
-                <View style={styles.nameDetail}>
-                    <Text  style={fonts.blackBoldMedium}>Request</Text>
-
-                    <TouchableOpacity>
-                    
-                        <Text style={fonts.blackBoldMedium}>Plumber</Text>
-                   
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-
-            
-        </View>
-
-        <View style={styles.textView}>
-
-
-
-
-
-
-</View>
-
-
-<View style={styles.customerDet}>
-    
-
-    <View style={styles.nameDetail}>
-        <Text  style={fonts.blackBoldMedium}>Remarks</Text>
-
-       
-        
-            
-       
-        
-    </View>
-
-   
-</View>
-<Text style={fonts.blackLightSmall}>Hello, am looking for a plumber to 
-            fix my kitchen sink, please look at the photos I sent. Its Urgent Please!</Text>
-      
-
-
-
-        <View style={styles.buttonView}>
-
-            <Card style={styles.declineButton}>
-            <TouchableOpacity >
-                <Text style={fonts.blackBoldMedium}>
-                Cancel
-                </Text>
-                </TouchableOpacity>
-            </Card>
-         
-            
-            <Card style={styles.acceptButton}>
-            <TouchableOpacity >
-                <Text style={fonts.blackBoldMedium}>
-               Waiting 
-                </Text>
-                </TouchableOpacity>
-            </Card>
-            
-            
-
-        </View>
-
-
-
-
-    </View>
-
-
-
-
-
-</Card>
-
-
-
-
-
-
-</View>
-                   
-            
-
-
-
-                <TitleText style={fonts.whiteBoldBig}>Delivery (5)</TitleText>
-               
-                <View style={styles.gigs}>
-
-<Card style={styles.prodCard}>
-
-   
-
-    <View style={styles.orderDetails}>
-      
-      
-
-        <Card style={styles.additionsView}>
-            
-        
-        <View style={styles.descriptionView}>   
-                    <View style={styles.cartprodImage}>
-                    <Image
-                      //  source={{ uri: imgUrl }}
-                        style={styles.bannerimage}
-                    // resizeMode="cover" 
-                    />
-                </View>
-<View style={styles.description}>
-
-                    <View style={styles.textView}>
-
-                    <Text allowFontScaling={false} style={fonts.blackBoldMedium}> Alice Achieng</Text>
-                    <Text allowFontScaling={false} style={fonts.blackBoldMedium}>See Attachment</Text>
-
-                    </View>
-
-                   
-                    
-                    <View style={styles.textView}>
-
-
-
-
-                        <View style={styles.textView2}>
-                       
-                            <Text allowFontScaling={false} style={fonts.blackBoldSmall}>+254722xxxxxx</Text>
-                        </View>
-
-                        <View style={styles.textView2}>
-
-                            {/* <Text  style={styles.text42}>Quantity</Text>*/}
-                        </View>
-
-                        
-                        
-
-                    </View>
-                   
-
-
-                  
-                    <View style={styles.textView}>
-
-
-                        <View style={styles.textView2}>
-                           
-                            <Text allowFontScaling={false} style={fonts.greyLightSmall}>Labour Charge</Text>
-
-                        </View>
-
-                        
-
-                       
-
-                        <View style={styles.textView2}>
-                           
-                        <Text allowFontScaling={false} style={fonts.greyLightSmall}>500 </Text>
-
-                       </View>
-
-                        
-                    </View>
-
-                    <View style={styles.textView}>
-
-
-<View style={styles.textView2}>
-   
-    <Text allowFontScaling={false} style={fonts.greyLightSmall}>Transport Charge</Text>
-
-</View>
-
-
-
-
-
-<View style={styles.textView2}>
-   
-<Text allowFontScaling={false} style={fonts.greyLightSmall}>300 </Text>
-
-</View>
-
-
-</View>
-
-
-
-                    </View>
-                    </View>
-
-
-
-
-
-                    
-            
-
-        </Card>
-
-        <View style={styles.textView}>
-            <View style={styles.textView2}>
-               
-            </View>
-
-            <View style={styles.textView2}>
-               
-                <Text  style={fonts.greeBoldSmall}>Ksh 800</Text>
-            </View>
-        </View>
-
-
-        <View style={styles.textView}>
-            <TouchableOpacity>
-            <View style={styles.textView2}>
-                <MaterialIcons name="location-pin" size={24} color="black" />
-                <Text style={fonts.greyLightBig}> Waumini Apartments (View Map)</Text>
-            </View>
-
-            </TouchableOpacity>
-           
-        </View>
-
-        
-        
-
-       
-
-
-        <View style={styles.textView}>
-
-
-            <View style={styles.customerDet}>
-                
-
-                <View style={styles.nameDetail}>
-                    <Text  style={fonts.blackBoldMedium}>Request</Text>
-
-                    <TouchableOpacity>
-                    
-                        <Text style={fonts.blackBoldMedium}>Plumber</Text>
-                   
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-
-            
-        </View>
-
-        <View style={styles.textView}>
-
-
-
-
-
-
-</View>
-
-
-<View style={styles.customerDet}>
-    
-
-    <View style={styles.nameDetail}>
-        <Text  style={fonts.blackBoldMedium}>Remarks</Text>
-
-       
-        
-            
-       
-        
-    </View>
-
-   
-</View>
-<Text style={fonts.blackLightSmall}>Hello, am looking for a plumber to 
-            fix my kitchen sink, please look at the photos I sent. Its Urgent Please!</Text>
-      
-
-
-
-        <View style={styles.buttonView}>
-
-            
-         
-            
-            <Card style={styles.acceptButton}>
-            <TouchableOpacity  onPress={() => { navigation.replace("RatingScreen", { state: 0 }) }}>
-                <Text style={fonts.blackBoldMedium}>
-                Arrived
-                </Text>
-                </TouchableOpacity>
-            </Card>
-            
-            
-
-        </View>
-
-
-
-
-    </View>
-
-
-
-
-
-</Card>
-
-
-
-
-
-
-</View>
-
-</ScrollView>
+               {/*  <ScrollView> */}
+               {pendingGigs.length === 0 && activeGigs.length === 0 && (
+                    <>
+                <TitleText style={fonts.whiteBoldBig}>New Gigs ({allgigs.length})</TitleText>
+                <FlatList
+                    onRefresh={getNewOrders}
+                    data={allgigs}
+                    refreshing={refreshing}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderOrders}
+                    numColumns={1}
+                />
+                </>
+                )}
+
+                  <TitleText style={fonts.whiteBoldBig}>Pending ({pendingGigs.length})</TitleText>
+                  <FlatList
+                    onRefresh={getPendingOrders}
+                    data={pendingGigs}
+                    refreshing={refreshing}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderPendingOrders}
+                    numColumns={1}
+                />
+
+                 
+
+
+
+                <TitleText style={fonts.whiteBoldBig}>Delivery ({activeGigs.length})</TitleText>
+                <FlatList
+                    onRefresh={getActiveOrders}
+                    data={activeGigs}
+                    refreshing={refreshing}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderActiveOrders}
+                    numColumns={1}
+                />
+
+
+{/*</ScrollView>*/}
 
             </ImageBackground>
 
@@ -914,7 +1181,12 @@ const styles = StyleSheet.create({
         padding: 10,
        height: 'auto',
     },
-
+    text2c: {
+        fontFamily: 'Lexend-bold',
+        fontSize: 15,
+        color: 'white',
+        fontWeight: 'bold'
+    },
     statsCard: {
         width: 164,
         height: 80,

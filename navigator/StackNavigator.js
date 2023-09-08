@@ -20,6 +20,12 @@ export function HomeStack() {
     return (
         <Home.Navigator>
 
+<Home.Screen
+                name="LoginScreen"
+                component={LoginScreen}
+                options={{ headerShown: false }}
+            />
+
 
 
             <Home.Screen
