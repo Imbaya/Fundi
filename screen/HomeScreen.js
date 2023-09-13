@@ -1,5 +1,5 @@
 import React, {useState,useRef,useEffect} from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ImageBackground } from 'react-native';
 import Card from '../components/card';
 import { Dimensions } from 'react-native';
 import TitleText from '../components/TitleText';
@@ -176,6 +176,13 @@ const styles = StyleSheet.create({
       },
 
 
+      imageBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height
+    },
+    
 
 });
 

@@ -30,26 +30,41 @@ export default function DrawerNavigator(){
                 name = "HomeStack"
                 component = {HomeStack}
                 options = {{
-                    title:"ACCOUNT",
+                  
+                    drawerLabel: 'Doe',
+                    drawerLabelStyle: {
+                     fontSize: 20,
+                     color: '#17304A',
+                     fontWeight: 'bold',
+                     fontFamily: 'Lexend-bold'
+                   },
                     drawerIcon : ({focused,size})=><Icon type="material-community" 
                                                          name = "account"
-                                                         color = {focused?'#7cc':colors.grey2}
-                                                         size = {100}
+                                                         color = "grey"
+                                                         size = {80}
                                                          
                                                           />,  
+                                                          
                      headerShown : false
                      
                 }}
             />
 
 <Drawer.Screen
-                name = "Wallet"
+                name = "Work history"
                 component = {HomeStack}
                 options = {{
-                    title:"Wallet",
+                  
+                    drawerLabel: 'Work history',
+                    drawerLabelStyle: {
+                     fontSize: 15,
+                     color: '#17304A',
+                     fontWeight: 'bold',
+                     fontFamily: 'Lexend-bold'
+                   },
                     drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
+                                                         name = "history"
+                                                         color= "#17304A"
                                                          size = {size}
                                                          
                                                           />,  
@@ -60,30 +75,20 @@ export default function DrawerNavigator(){
             />
 
 <Drawer.Screen
-                name = "Work History"
-                component = {HomeStack}
-                options = {{
-                    title:"Work History",
-                    drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
-                                                         size = {size}
-                                                         
-                                                          />,  
-                     headerShown : false
-                     
-                }}
-                onPress ={()=>{navigation.navigate("RequestScreen",{state:0})}}
-            />
-             
-             <Drawer.Screen
                 name = "Active/Inactive"
                 component = {HomeStack}
                 options = {{
-                    title:"Active/Inactive",
+                  
+                    drawerLabel: 'Active/Inactive',
+                    drawerLabelStyle: {
+                     fontSize: 15,
+                     color: '#17304A',
+                     fontWeight: 'bold',
+                     fontFamily: 'Lexend-bold'
+                   },
                     drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
+                                                         name = "nintendo-switch"
+                                                         color= "#17304A"
                                                          size = {size}
                                                          
                                                           />,  
@@ -92,33 +97,24 @@ export default function DrawerNavigator(){
                 }}
                 onPress ={()=>{navigation.navigate("RequestScreen",{state:0})}}
             />
-             
-             <Drawer.Screen
-                name = "Settings"
-                component = {HomeStack}
-                options = {{
-                    title:"Settings",
-                    drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
-                                                         size = {size}
-                                                         
-                                                          />,  
-                     headerShown : false
-                     
-                }}
-                onPress ={()=>{navigation.navigate("RequestScreen",{state:0})}}
-            />
+
 
 
 <Drawer.Screen
                 name = "Support"
                 component = {HomeStack}
                 options = {{
-                    title:"Support",
+                  
+                    drawerLabel: 'Support',
+                    drawerLabelStyle: {
+                     fontSize: 15,
+                     color: '#17304A',
+                     fontWeight: 'bold',
+                     fontFamily: 'Lexend-bold'
+                   },
                     drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
+                    name = "face-agent"
+                                                         color= "#17304A"
                                                          size = {size}
                                                          
                                                           />,  
@@ -128,14 +124,48 @@ export default function DrawerNavigator(){
                 onPress ={()=>{navigation.navigate("RequestScreen",{state:0})}}
             />
 
+
 <Drawer.Screen
-                name = "Invoices"
+                name = "Change password"
                 component = {HomeStack}
                 options = {{
-                    title:"Invoices",
+                  
+                    drawerLabel: 'Change password',
+                    drawerLabelStyle: {
+                     fontSize: 15,
+                     color: '#17304A',
+                     fontWeight: 'bold',
+                     fontFamily: 'Lexend-bold'
+                   },
                     drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
+                                                         name = "wallet"
+                                                         color= "#17304A"
+                                                         size = {size}
+                                                         
+                                                          />,  
+                     headerShown : false
+                     
+                }}
+                onPress ={()=>{navigation.navigate("RequestScreen",{state:0})}}
+            />
+         
+
+
+         <Drawer.Screen
+                name = "Logout"
+                component = {HomeStack}
+                options = {{
+                  
+                    drawerLabel: 'Logout',
+                    drawerLabelStyle: {
+                     fontSize: 15,
+                     color: '#17304A',
+                     fontWeight: 'bold',
+                     fontFamily: 'Lexend-bold'
+                   },
+                    drawerIcon : ({focused,size})=><Icon type="material-community" 
+                    name = "logout"
+                                                         color= "#17304A"
                                                          size = {size}
                                                          
                                                           />,  
@@ -145,37 +175,6 @@ export default function DrawerNavigator(){
                 onPress ={()=>{navigation.navigate("RequestScreen",{state:0})}}
             />
 
-<Drawer.Screen
-                name = "Ratings"
-                component = {HomeStack}
-                options = {{
-                    title:"Ratings",
-                    drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
-                                                         size = {size}
-                                                         
-                                                          />,  
-                     headerShown : false
-                     
-                }}
-                onPress ={()=>{navigation.navigate("SignUpScreen",{state:0})}}
-            />
-            <Drawer.Screen
-                name = "SignOut"
-                component = {HandleSignOut}
-                options = {{
-                    title:"SignOut",
-                    drawerIcon : ({focused,size})=><Icon type="material-community" 
-                                                         name = "home"
-                                                         color = {focused?'#7cc':colors.grey2}
-                                                         size = {size}
-                                                         
-                                                          />,  
-                     headerShown : false
-                     
-                }}
-            />
 
         </Drawer.Navigator>
     )

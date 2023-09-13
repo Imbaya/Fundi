@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, FlatList, Text, } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, FlatList, Text, ImageBackground } from 'react-native';
 import Card from '../components/card';
 import { Dimensions } from 'react-native';
 import { SERVICES } from '../data/services';
@@ -12,7 +12,7 @@ import { QUOTE } from '../data/services';
 import { fonts } from '../components/fonts';
 
 const RatingScreen = ({ navigation }) => {
-
+    const thumb = 'https://example.com/image.jpg';
 
     
  
@@ -21,22 +21,14 @@ return (
 
 
     <View style={styles.container}>
+
+<ImageBackground
+                source={require('../assets/4k-background.png')}
+                resizeMode="cover"
+                style={styles.imageBackground}
+            >
         
 
-        <View style={styles.iconView}>
-            <Icon
-                type="material-community"
-                name="menu"
-                //color = {colors.grey1}
-                size={35}
-                onPress={() => { navigation.navigate("RequestScreen", { state: 0 }) }}
-            />
-
-
-
-
-
-        </View>
 
         
        
@@ -53,12 +45,12 @@ return (
                     <View style={styles.flatlist}>
                    
                     <Image
-                            source={require('../assets/Fundi.png')}
+                            source={require('../assets/thumb.png')}
                             style={styles.image}
                         // resizeMode="cover" 
                         />
- <TitleText style={fonts.blackBoldBig}>Thank You</TitleText>
-                    <TitleText style={fonts.blackBoldMedium}>Happy to help you again</TitleText>
+ <TitleText style={fonts.blueBoldBig}>Thank You!</TitleText>
+                    <TitleText style={fonts.blueBoldMedium}>Happy to help you again</TitleText>
                     </View>
 
                     
@@ -78,7 +70,7 @@ return (
                     <View style={styles.buttonView}>
 
 
-<TouchableOpacity onPress={() => { navigation.navigate("ConfirmScreen", { state: 0 }) }}>
+<TouchableOpacity onPress={() => { navigation.navigate("LastScreen", { state: 0 }) }}>
 
 <Card style={styles.submitbutton}>
 
@@ -113,7 +105,7 @@ return (
 
 
             </View>
-        
+       </ImageBackground> 
 
     </View>
 
@@ -155,7 +147,7 @@ image: {
     height: Dimensions.get('window').width * 0.5,
     width: Dimensions.get('window').width * 0.5,
     borderRadius: 120,
-    backgroundColor: '#17304A'
+  //  backgroundColor: '#17304A'
 },
 
 imageBackground: {
@@ -301,7 +293,7 @@ card: {
   //  justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 100,
-    height: Dimensions.get('window').height * 0.75,
+   // height: Dimensions.get('window').height * 0.75,
     shadowOpacity: 0.2,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
@@ -325,7 +317,7 @@ gridView: {
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 100,
-    height: Dimensions.get('window').height * 0.75,
+    height: 550,
 
 },
 

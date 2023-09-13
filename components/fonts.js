@@ -54,7 +54,7 @@ export const fonts = StyleSheet.create({
 
     blackBoldMedium: {
         fontFamily: 'Lexend-bold',
-        fontSize: 17,
+        fontSize: 15,
         color: 'black',
         fontWeight: 'bold'
     },
@@ -96,5 +96,19 @@ export const fonts = StyleSheet.create({
         fontSize: 12,
         color: 'white',
         
+    },
+
+    blueBoldBig: {
+        fontFamily: 'Lexend-bold',
+        fontSize: 24,
+        color: '#2B5989',
+        fontWeight: 'bold'
+    },
+
+    blueBoldMedium: {
+        fontFamily: 'Lexend-bold',
+        fontSize: 17,
+        color: '#2B5989',
+        fontWeight: 'bold'
     },
 });
