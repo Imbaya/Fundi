@@ -10,6 +10,7 @@ import { fonts } from '../components/fonts';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import getDistance from 'geolib/es/getPreciseDistance';
 import MapView, { Marker } from 'react-native-maps';
+import firebase from 'firebase';
 
 const GigScreen = ({ navigation }) => {
     const [username, setUsername] = useState('');
@@ -34,7 +35,44 @@ const GigScreen = ({ navigation }) => {
     const [AgentLastName, setAgentLastName] = useState("");
     const [AgentPhoneNumber, setAgentPhoneNumber] = useState("");
     const [modalVisible, setModalVisible] = useState(false);
+    const [profession, setAgentProfession] =  useState(null);
 
+    useEffect(() => {
+        (async () => {
+          let { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            console.error('Permission to access location was denied');
+            return;
+          }
+    
+          Location.watchPositionAsync(
+            {
+              accuracy: Location.Accuracy.High,
+              distanceInterval: 1,
+              timeInterval: 10000,
+            },
+            async (location) => {
+              const { latitude, longitude } = location.coords;
+              await updateLocation(latitude, longitude);
+            }
+          );
+        })();
+      }, []);
+
+      const updateLocation = async (latitude, longitude) => {
+        // Replace 'agentId' with the actual agent's ID
+        const docRef = db.collection('Location').doc(auth.currentUser.uid);
+    
+        try {
+            await docRef.set({
+              location: new firebase.firestore.GeoPoint(latitude, longitude),
+            }, { merge: true });
+          } catch (error) {
+            console.error("Error updating document: ", error);
+          }
+          
+      };
+    
 
     const openDialer = (phoneNumber) => {
         const formattedPhoneNumber = phoneNumber.replace(/\s+/g, ''); // Remove spaces from the phone number
@@ -50,7 +88,7 @@ const GigScreen = ({ navigation }) => {
             setRefreshing(true);
         
             const allgigs = [];
-            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "New Gig").get();
+            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "New Gig").where("selected", "==", profession) .get();
             querySnapshot.forEach((doc) => {
                 allgigs.push({ id: doc.id, ...doc.data() });
                 // doc.data() is never undefined for query doc snapshots
@@ -1023,11 +1061,13 @@ const GigScreen = ({ navigation }) => {
         const firstname = doc.data().firstname;
         const lastname = doc.data().lastname;
         const phonenumber = doc.data().phonenumber;
+        const profession = doc.data().profession;
         
         //store the agent data in a variable
         setAgentFirstName(firstname);
         setAgentLastName(lastname);
         setAgentPhoneNumber(phonenumber);
+        setAgentProfession(profession);
 
     }
     
