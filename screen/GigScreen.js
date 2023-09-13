@@ -960,7 +960,7 @@ const GigScreen = ({ navigation }) => {
                         
                            
                         </View>
-                        <Text style={fonts.blackLightSmall}>{item.id}</Text>
+                        <Text style={fonts.blackLightSmall}>{item.description}</Text>
                               
                         
                         

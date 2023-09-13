@@ -4,7 +4,7 @@ import Card from '../components/card';
 import { Dimensions } from 'react-native';
 import TitleText from '../components/TitleText';
 import { Icon } from 'react-native-elements';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE,  } from 'react-native-maps';
 import { PermissionsAndroid } from 'react-native';
 import * as Location from 'expo-location';
 
@@ -49,6 +49,7 @@ useEffect(() => {
 {location ? (
         <MapView
           style={styles.map}
+          provider={PROVIDER_GOOGLE}
           initialRegion={{
             latitude: location.latitude,
             longitude: location.longitude,

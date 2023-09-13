@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "rekebishaApp",
+    "name": "R-Fundi",
     "slug": "rekebishaApp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,11 +22,17 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/splashlogo.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.whim.RekebishaFundi001",
-      "versionCode": 7
+      "versionCode": 8,
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB7EFvFzgS6PDOkhHshLII90oQ6L2rsELo"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
