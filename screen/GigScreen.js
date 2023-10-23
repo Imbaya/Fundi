@@ -38,6 +38,16 @@ const GigScreen = ({ navigation }) => {
     const [profession, setAgentProfession] =  useState(null);
 
     useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (!user) {
+                navigation.replace("LoginScreen")
+            }
+        })
+    
+        return unsubscribe
+    }, [])
+
+    useEffect(() => {
         (async () => {
           let { status } = await Location.requestForegroundPermissionsAsync();
           if (status !== 'granted') {

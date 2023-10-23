@@ -1,5 +1,5 @@
 import React, {useState,useRef,useEffect} from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ImageBackground, BackHandler } from 'react-native';
 import Card from '../components/card';
 import { Dimensions } from 'react-native';
 import TitleText from '../components/TitleText';
@@ -7,7 +7,7 @@ import { Icon } from 'react-native-elements';
 import MapView, { Marker, PROVIDER_GOOGLE,  } from 'react-native-maps';
 import { PermissionsAndroid } from 'react-native';
 import * as Location from 'expo-location';
-
+import { auth } from '../Database/config';
 
 const HomeScreen =({ navigation }) => {
   
@@ -15,31 +15,41 @@ const HomeScreen =({ navigation }) => {
   const [errorMsg, setErrorMsg] = useState(null);
 
  
-useEffect(() => {
-  (async () => {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Location Permission',
-          message: 'App needs access to your location.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-      );
-
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        let location = await Location.getCurrentPositionAsync({});
-        setLocation(location.coords);
-      } else {
-        setErrorMsg('Permission to access location was denied');
+  useEffect(() => {
+    (async () => {
+      // Request permission to access the user's location
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permission to access location was denied');
+        return;
       }
-    } catch (error) {
-      console.error('Error requesting location permission:', error);
-    }
-  })();
-}, []);
+
+      // Get the user's current location
+      const location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+    })();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+        if (!user) {
+            navigation.replace("LoginScreen")
+        }
+    })
+
+    return unsubscribe
+}, [])
+
+  // Inside your screen component
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Return true to prevent navigation
+      return true;
+    });
+  
+    return () => backHandler.remove();
+  }, []);
+
 
     return (
 
@@ -51,23 +61,24 @@ useEffect(() => {
           style={styles.map}
           provider={PROVIDER_GOOGLE}
           initialRegion={{
-            latitude: location.latitude,
-            longitude: location.longitude,
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
             latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
-          }}>
+          }}
+        >
           <Marker
             coordinate={{
-              latitude: location.latitude,
-              longitude: location.longitude,
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
             }}
             title="Your Location"
-            description="You are here!"
           />
         </MapView>
       ) : (
         <Text>Loading...</Text>
       )}
+
 
 
 <View style={styles.iconView}>
