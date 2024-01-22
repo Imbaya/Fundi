@@ -82,12 +82,12 @@ const HomeScreen =({ navigation }) => {
 
 
 <View style={styles.iconView}>
-                <Icon
+<Icon
                     type="material-community"
-                    name="menu"
+                    name="account"
                     //color = {colors.grey1}
                     size={35}
-                    onPress={() => { navigation.toggleDrawer() }}
+                    onPress={() => { navigation.navigate("ProfileScreen", { state: 0 }) }}
                 />
 
 

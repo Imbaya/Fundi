@@ -1,11 +1,11 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import DrawerNavigator from "./DrawerNavigator";
+import { HomeStack } from "./StackNavigator";
 
 export default function RootNavigator(){
     return(
         <NavigationContainer>
-            <DrawerNavigator />
-        </NavigationContainer>
+        <HomeStack />
+    </NavigationContainer>
     )
 }

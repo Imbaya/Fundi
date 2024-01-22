@@ -12,6 +12,7 @@ import ConfirmationScreen from '../screen/confirmationScreen';
 import ConfirmedScreen from '../screen/ConfirmedPage';
 import PaymentScreen from '../screen/PaymentPage';
 import RatingScreen from '../screen/Rating';
+import MemberProfile from '../screen/MemberProfile';
 
 
 const Home = createNativeStackNavigator();
@@ -83,6 +84,12 @@ export function HomeStack() {
 <Home.Screen
                 name="PaymentScreen"
                 component={PaymentScreen}
+                options={{ headerShown: false }}
+            />
+
+<Home.Screen
+                name="ProfileScreen"
+                component={MemberProfile}
                 options={{ headerShown: false }}
             />
 
