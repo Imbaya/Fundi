@@ -10,7 +10,8 @@ import { fonts } from '../components/fonts';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import getDistance from 'geolib/es/getPreciseDistance';
 import MapView, { Marker } from 'react-native-maps';
-import firebase from 'firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, getDocs,doc, updateDoc  } from 'firebase/firestore';
 
 const GigScreen = ({ navigation }) => {
     const [username, setUsername] = useState('');
@@ -38,14 +39,15 @@ const GigScreen = ({ navigation }) => {
     const [profession, setAgentProfession] =  useState(null);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(user => {
-            if (!user) {
+        const unsubscribe = onAuthStateChanged(auth, user => {
+            if (user) {
                 navigation.replace("LoginScreen")
             }
         })
-    
+
         return unsubscribe
     }, [])
+
 
     useEffect(() => {
         (async () => {
@@ -94,69 +96,65 @@ const GigScreen = ({ navigation }) => {
       
 
         //Import all the gigs from firebase
-        const getNewOrders =async () => {
-            setRefreshing(true);
-        
-            const allgigs = [];
-            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "New Gig").where("selected", "==", profession) .get();
-            querySnapshot.forEach((doc) => {
-                allgigs.push({ id: doc.id, ...doc.data() });
-                // doc.data() is never undefined for query doc snapshots
-                console.log(doc.id, " => ", doc.data());
-                const lat= doc.data().location.latitude;
-                const long = doc.data().location.longitude;
-                const amount = doc.data().amount;
-                setBuyerLatitude(lat);
-                setBuyerLongitude(long); 
-                setAmount(amount);
-                
-            });
-            setAllgigs([...allgigs]);
-            setRefreshing(false);
-            
-        } 
-
-          //Import all the gigs from firebase
-          const getPendingOrders =async () => {
-            setRefreshing(true);
-            const pendinggigs = [];
-            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "Pending Delivery").where("agentId", "==", auth.currentUser.uid).get();
-            querySnapshot.forEach((doc) => {
-                pendinggigs.push({ id: doc.id, ...doc.data() });
-                // doc.data() is never undefined for query doc snapshots
-                console.log(doc.id, " => ", doc.data());
-                const lat= doc.data().Latitude;
-                const long = doc.data().Longitude;
-                const amount = doc.data().Budget;
-                setBuyerLatitude(lat);
-                setBuyerLongitude(long); 
-                setAmount(amount);
-            });
-            setPendingGigs([...pendinggigs]);
-            setRefreshing(false);
-            
-        } 
-        
-          //Import all the gigs from firebase
-          const getActiveOrders =async () => {
-            setRefreshing(true);
-            const activegigs = [];
-            const querySnapshot = await dbc.collection("FundiIssues").where("status", "==", "Active").where("agentId", "==", auth.currentUser.uid).get();
-            querySnapshot.forEach((doc) => {
-                activegigs.push({ id: doc.id, ...doc.data() });
-                // doc.data() is never undefined for query doc snapshots
-                console.log(doc.id, " => ", doc.data());
-                const lat= doc.data().Latitude;
-                const long = doc.data().Longitude;
-                const amount = doc.data().Budget;
-                setBuyerLatitude(lat);
-                setBuyerLongitude(long); 
-                setAmount(amount);
-            });
-            setActiveGigs([...activegigs]);
-            setRefreshing(false);
-            
-        } 
+       
+const getNewOrders = async () => {
+    setRefreshing(true);
+  
+    const allgigs = [];
+    const q = query(collection(dbc, "FundiIssues"), where("status", "==", "New Gig"), where("selected", "==", profession));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      allgigs.push({ id: doc.id, ...doc.data() });
+      console.log(doc.id, " => ", doc.data());
+      const lat = doc.data().location.latitude;
+      const long = doc.data().location.longitude;
+      const amount = doc.data().amount;
+      setBuyerLatitude(lat);
+      setBuyerLongitude(long); 
+      setAmount(amount);
+    });
+    setAllgigs([...allgigs]);
+    setRefreshing(false);
+  }
+  
+  const getPendingOrders = async () => {
+    setRefreshing(true);
+    const pendinggigs = [];
+    const q = query(collection(dbc, "FundiIssues"), where("status", "==", "Pending Delivery"), where("agentId", "==", auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      pendinggigs.push({ id: doc.id, ...doc.data() });
+      console.log(doc.id, " => ", doc.data());
+      const lat = doc.data().Latitude;
+      const long = doc.data().Longitude;
+      const amount = doc.data().Budget;
+      setBuyerLatitude(lat);
+      setBuyerLongitude(long); 
+      setAmount(amount);
+    });
+    setPendingGigs([...pendinggigs]);
+    setRefreshing(false);
+  }
+  
+  const getActiveOrders = async () => {
+    setRefreshing(true);
+    const activegigs = [];
+    const q = query(collection(dbc, "FundiIssues"), where("status", "==", "Active"), where("agentId", "==", auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      activegigs.push({ id: doc.id, ...doc.data() });
+      console.log(doc.id, " => ", doc.data());
+      const lat = doc.data().Latitude;
+      const long = doc.data().Longitude;
+      const amount = doc.data().Budget;
+      setBuyerLatitude(lat);
+      setBuyerLongitude(long); 
+      setAmount(amount);
+    });
+    setActiveGigs([...activegigs]);
+    setRefreshing(false);
+  }
+  
 
         useEffect(() => {
          getLocation();
@@ -187,28 +185,29 @@ const GigScreen = ({ navigation }) => {
             const totalMoney = courierCharges + item.Budget
         
             //Accepting an order
-         const handleUpdate = async (id) => {
-            await dbc.collection('FundiIssues').doc(id).update({
-              status: "Pending Delivery",
-              agentId: auth.currentUser.uid,
-              agentLatitude: latitude,
-              agentLongitude: longitude,
-              totalMoney,
-              timeInMinutes,
-              courierCharges,
-              distance,
-              AgentFirstName:AgentFirstName,
-              AgentLastName:AgentLastName,
-              AgentPhoneNumber:AgentPhoneNumber
-              });
-              setDistance(distance);
-              setTimeInMinutes(timeInMinutes);
-              setCourierCharges(courierCharges);
-              setTotalMoney(totalMoney);
-             // setIsAccepted(id);
-              getNewOrders();
-              getPendingOrders();
-            };
+             const handleUpdate = async (id) => {
+                const docRef = doc(dbc, 'FundiIssues', id);
+                await updateDoc(docRef, {
+                  status: "Pending Delivery",
+                  agentId: auth.currentUser.uid,
+                  agentLatitude: latitude,
+                  agentLongitude: longitude,
+                  totalMoney,
+                  timeInMinutes,
+                  courierCharges,
+                  distance,
+                  AgentFirstName:AgentFirstName,
+                  AgentLastName:AgentLastName,
+                  AgentPhoneNumber:AgentPhoneNumber
+                });
+                setDistance(distance);
+                setTimeInMinutes(timeInMinutes);
+                setCourierCharges(courierCharges);
+                setTotalMoney(totalMoney);
+                // setIsAccepted(id);
+                getNewOrders();
+                getPendingOrders();
+              };
             const clientLocation = {
                 latitude: item.location.latitude,
                 longitude: item.location.longitude,

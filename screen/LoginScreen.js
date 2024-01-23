@@ -5,7 +5,7 @@ import { Dimensions } from 'react-native';
 import TitleText from '../components/TitleText';
 import SubText from '../components/SubText';
 import { auth } from '../Database/config';
-
+import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 
 const LoginScreen = ({ navigation }) => {
 
@@ -13,17 +13,17 @@ const LoginScreen = ({ navigation }) => {
     const [password, setPassword] = useState('')
 
     const handleLogin = () => {
-        auth
-        .signInWithEmailAndPassword(email, password)
-        .then(userCredentials => {
+        signInWithEmailAndPassword(auth, email, password)
+          .then(userCredentials => {
             const user = userCredentials.user;
-            console.log( 'Logged in with:', user.email);
-           })
-           .catch(error => alert(error.message))
-    }
+            console.log('Logged in with:', user.email);
+            navigation.replace("HomeScreen");
+          })
+          .catch(error => alert(error.message))
+      }
 
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(user => {
+      useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, user => {
             if (user) {
                 navigation.replace("HomeScreen")
             }

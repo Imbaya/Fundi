@@ -8,6 +8,7 @@ import MapView, { Marker, PROVIDER_GOOGLE,  } from 'react-native-maps';
 import { PermissionsAndroid } from 'react-native';
 import * as Location from 'expo-location';
 import { auth } from '../Database/config';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const HomeScreen =({ navigation }) => {
   
@@ -31,8 +32,8 @@ const HomeScreen =({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-        if (!user) {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+        if (user) {
             navigation.replace("LoginScreen")
         }
     })
