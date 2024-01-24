@@ -100,9 +100,9 @@ const LoginScreen = ({ navigation }) => {
                     <View style={styles.login}>
 
 
-                    <TouchableWithoutFeedback onPress={() => { navigation.navigate("SignUpScreen", { state: 0 }) }}>
+                    <TouchableWithoutFeedback onPress={() => { navigation.navigate("ForgotScreen", { state: 0 }) }}>
                         <View>
-                            <SubText style={styles.Text}>Don't have an account? Click Here</SubText>
+                            <SubText style={styles.Text}>Forgot password? Click Here</SubText>
                         </View>
                     </TouchableWithoutFeedback>
                     </View>
@@ -188,10 +188,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F2F0',
 
         width: Dimensions.get('window').width * 1,
-        paddingTop: 20,
+        paddingTop: 47,
         alignItems: 'center',
         borderRadius: 100,
-        height: Dimensions.get('window').height * 1,
+        height: Dimensions.get('window').height * 0.5,
         shadowOpacity: 0.2,
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 100,
-        height: Dimensions.get('window').height * 0.36,
+        height: Dimensions.get('window').height * 0.5,
 
     },
 

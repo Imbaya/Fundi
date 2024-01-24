@@ -12,6 +12,7 @@ import ConfirmationScreen from '../screen/confirmationScreen';
 import ConfirmedScreen from '../screen/ConfirmedPage';
 import PaymentScreen from '../screen/PaymentPage';
 import RatingScreen from '../screen/Rating';
+import ForgotPasswordScreen from '../screen/ForgotPassword';
 
 
 const Home = createNativeStackNavigator();
@@ -20,13 +21,17 @@ export function HomeStack() {
     return (
         <Home.Navigator>
 
-<Home.Screen
+            <Home.Screen
                 name="LoginScreen"
                 component={LoginScreen}
                 options={{ headerShown: false }}
             />
 
-
+            <Home.Screen
+                name="ForgotScreen"
+                component={ForgotPasswordScreen}
+                options={{ headerShown: false }}
+            />
 
             <Home.Screen
                 name="HomeScreen"
@@ -40,8 +45,8 @@ export function HomeStack() {
                 options={{ headerShown: false }}
             />
 
-         
-<Home.Screen
+
+            <Home.Screen
                 name="RatingScreen"
                 component={RatingScreen}
                 options={{ headerShown: false }}
@@ -49,38 +54,38 @@ export function HomeStack() {
 
 
 
-<Home.Screen
+            <Home.Screen
                 name="QuoteScreen"
                 component={QuoteScreen}
                 options={{ headerShown: false }}
             />
 
 
-<Home.Screen
+            <Home.Screen
                 name="LastScreen"
                 component={LastScreen}
                 options={{ headerShown: false }}
             />
 
-<Home.Screen
+            <Home.Screen
                 name="ArrivedScreen"
                 component={ArrivedScreen}
                 options={{ headerShown: false }}
             />
 
-<Home.Screen
+            <Home.Screen
                 name="ConfirmationScreen"
                 component={ConfirmationScreen}
                 options={{ headerShown: false }}
             />
 
-<Home.Screen
+            <Home.Screen
                 name="ConfirmedScreen"
                 component={ConfirmedScreen}
                 options={{ headerShown: false }}
             />
 
-<Home.Screen
+            <Home.Screen
                 name="PaymentScreen"
                 component={PaymentScreen}
                 options={{ headerShown: false }}
