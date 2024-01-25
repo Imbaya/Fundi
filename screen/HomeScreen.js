@@ -7,8 +7,10 @@ import { Icon } from 'react-native-elements';
 import MapView, { Marker, PROVIDER_GOOGLE,  } from 'react-native-maps';
 import { PermissionsAndroid } from 'react-native';
 import * as Location from 'expo-location';
-import { auth } from '../Database/config';
+import { auth, db  } from '../Database/config';
 import { onAuthStateChanged } from 'firebase/auth';
+import {  doc, getDoc } from 'firebase/firestore';
+
 
 const HomeScreen =({ navigation }) => {
   
@@ -33,7 +35,7 @@ const HomeScreen =({ navigation }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, user => {
-        if (user) {
+        if (!user) {
             navigation.replace("LoginScreen")
         }
     })
@@ -42,15 +44,20 @@ const HomeScreen =({ navigation }) => {
 }, [])
 
   // Inside your screen component
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Return true to prevent navigation
-      return true;
-    });
+  const getCurrentUserDetails = async () => {
+    const docRef = doc(db, 'FundiAppUsers', auth.currentUser.uid);
+    const docSnap = await getDoc(docRef);
   
-    return () => backHandler.remove();
+    if (docSnap.exists()) {
+      console.log(docSnap.data());
+    } else {
+      console.log('No such document!');
+    }
+  }
+  
+  useEffect(() => {
+    getCurrentUserDetails();
   }, []);
-
 
     return (
 

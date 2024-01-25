@@ -11,7 +11,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import getDistance from 'geolib/es/getPreciseDistance';
 import MapView, { Marker } from 'react-native-maps';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs,doc, updateDoc  } from 'firebase/firestore';
+import { collection, query, where, getDocs,doc, updateDoc, getDoc, setDoc,GeoPoint  } from 'firebase/firestore';
 
 const GigScreen = ({ navigation }) => {
     const [username, setUsername] = useState('');
@@ -40,7 +40,7 @@ const GigScreen = ({ navigation }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, user => {
-            if (user) {
+            if (!user) {
                 navigation.replace("LoginScreen")
             }
         })
@@ -71,19 +71,20 @@ const GigScreen = ({ navigation }) => {
         })();
       }, []);
 
-      const updateLocation = async (latitude, longitude) => {
-        // Replace 'agentId' with the actual agent's ID
-        const docRef = db.collection('Location').doc(auth.currentUser.uid);
-    
-        try {
-            await docRef.set({
-              location: new firebase.firestore.GeoPoint(latitude, longitude),
-            }, { merge: true });
-          } catch (error) {
-            console.error("Error updating document: ", error);
-          }
-          
-      };
+     
+const updateLocation = async (latitude, longitude) => {
+    // Replace 'agentId' with the actual agent's ID
+    const docRef = doc(db, 'Location', auth.currentUser.uid);
+
+    try {
+        await setDoc(docRef, {
+          location: new GeoPoint(latitude, longitude),
+        }, { merge: true });
+      } catch (error) {
+        console.error("Error updating document: ", error);
+      }
+      
+  };
     
 
     const openDialer = (phoneNumber) => {
@@ -760,20 +761,20 @@ const getNewOrders = async () => {
 
                 const renderActiveOrders = ({item}) => {
                     //Accepting an order
+                    
                     const handleArrivedButtonClick = async () => {
                         try {
-                          // Reference to the Firestore collection and the specific document
-                          const ordersCollection = dbc.collection('FundiIssues');
-                          const orderDocument = ordersCollection.doc(item.id); // Assuming item.id is the document ID
-                    
-                          // Update the "status" field to "arrived"
-                          await orderDocument.update({ status: 'Arrived' });
-                    
-                          console.log('Order status updated to arrived');
+                            // Reference to the Firestore collection and the specific document
+                            const orderDocument = doc(dbc, 'FundiIssues', item.id); // Assuming item.id is the document ID
+
+                            // Update the "status" field to "arrived"
+                            await updateDoc(orderDocument, { status: 'Arrived' });
+
+                            console.log('Order status updated to arrived');
                         } catch (error) {
-                          console.error('Error updating order status:', error);
+                            console.error('Error updating order status:', error);
                         }
-                      };
+                    };
 
                       const clientLocation = {
                         latitude: item.location.latitude,
@@ -1065,19 +1066,24 @@ const getNewOrders = async () => {
       }
   
       const getUserDetails = async () => {
-        const doc = await db.collection('FundiAppUsers').doc(auth.currentUser.uid).get();
-        console.log(doc.data());
-        const firstname = doc.data().firstname;
-        const lastname = doc.data().lastname;
-        const phonenumber = doc.data().phonenumber;
-        const profession = doc.data().profession;
-        
-        //store the agent data in a variable
-        setAgentFirstName(firstname);
-        setAgentLastName(lastname);
-        setAgentPhoneNumber(phonenumber);
-        setAgentProfession(profession);
-
+        const docRef = doc(db, 'FundiAppUsers', auth.currentUser.uid);
+        const docSnap = await getDoc(docRef);
+    
+        if (docSnap.exists()) {
+            console.log(docSnap.data());
+            const firstname = docSnap.data().firstname;
+            const lastname = docSnap.data().lastname;
+            const phonenumber = docSnap.data().phonenumber;
+            const profession = docSnap.data().profession;
+    
+            //store the agent data in a variable
+            setAgentFirstName(firstname);
+            setAgentLastName(lastname);
+            setAgentPhoneNumber(phonenumber);
+            setAgentProfession(profession);
+        } else {
+            console.log("No such document!");
+        }
     }
     
   
