@@ -159,10 +159,6 @@ const getNewOrders = async () => {
 
         useEffect(() => {
          getLocation();
-         getUserDetails();
-         getActiveOrders();
-         getNewOrders();
-         getPendingOrders();
 
         }, [])
         

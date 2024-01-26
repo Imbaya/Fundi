@@ -21,12 +21,13 @@
       "supportsTablet": true
     },
     "android": {
+      "runtimeVersion": "1.0.0",
       "adaptiveIcon": {
         "foregroundImage": "./assets/splashlogo.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.whim.RekebishaFundi001",
-      "versionCode": 11,
+      "versionCode": 12,
       "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "config": {
         "googleMaps": {
@@ -41,6 +42,9 @@
       "eas": {
         "projectId": "b01d641f-7d95-4251-9d82-8f79a2db2a44"
       }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }
